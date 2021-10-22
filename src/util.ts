@@ -1,14 +1,23 @@
 import * as grpc from "@grpc/grpc-js";
+import { VerifyOptions } from "@grpc/grpc-js/build/src/channel-credentials";
+
+export interface ClientOpts {
+  insecure?: boolean;
+  rootCerts?: Buffer | null;
+  privateKey?: Buffer | null;
+  certChain?: Buffer | null;
+  verifyOptions?: VerifyOptions;
+}
 
 function createClientCreds(
   token: string,
-  insecure = false
+  opts: ClientOpts
 ): grpc.ChannelCredentials {
   const metadata = new grpc.Metadata();
   metadata.set("authorization", "Bearer " + token);
 
   const creds = [];
-  if (!insecure) {
+  if (!opts.insecure) {
     creds.push(
       grpc.credentials.createFromMetadataGenerator((_, callback) => {
         callback(null, metadata);
@@ -17,7 +26,14 @@ function createClientCreds(
   }
 
   return grpc.credentials.combineChannelCredentials(
-    insecure ? grpc.credentials.createInsecure() : grpc.credentials.createSsl(),
+    opts.insecure
+      ? grpc.credentials.createInsecure()
+      : grpc.credentials.createSsl(
+          opts.rootCerts,
+          opts.privateKey,
+          opts.certChain,
+          opts.verifyOptions
+        ),
     ...creds
   );
 }

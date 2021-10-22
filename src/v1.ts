@@ -10,9 +10,14 @@ import * as util from "./util";
 export function NewClient(
   token: string,
   endpoint = util.authzedEndpoint,
-  insecure = false
+  opts: boolean | util.ClientOpts = { insecure: false }
 ) {
-  const creds = util.createClientCreds(token, insecure);
+  if (typeof opts === "boolean" || opts instanceof Boolean) {
+    opts = {
+      insecure: opts as boolean,
+    };
+  }
+  const creds = util.createClientCreds(token, opts);
 
   const acl = new PermissionsServiceClient(endpoint, creds);
   const ns = new SchemaServiceClient(endpoint, creds);
